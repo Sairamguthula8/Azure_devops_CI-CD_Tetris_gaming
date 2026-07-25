@@ -21,28 +21,46 @@ stages:
         - task: NodeTool@0
           displayName: "Install Node.js"
           inputs:
-            versionSpec: "18.x"
+            versionSpec: "16.x"
+
+        - task: JavaToolInstaller@0
+          displayName: "Use Java 21"
+          inputs:
+            versionSpec: "21"
+            jdkArchitectureOption: "x64"
+            jdkSourceOption: "PreInstalled"
 
         - script: |
             node -v
             npm -v
             npm install
             npm run build
-          displayName: "Build Application"
+          displayName: Build Application
 
         - script: |
-            # Install SonarScanner CLI
+            # Install SonarScanner
             npm install -g sonar-scanner
 
-            # Run SonarQube analysis
+            echo "Scanner version:"
+            sonar-scanner --version
+
+            echo "Project: $(SONAR_PROJECT_KEY)"
+            echo "Organization: $(SONAR_ORG)"
+            echo "Host: $(SONAR_HOST_URL)"
+            echo "Token length: ${#SONAR_TOKEN}"
+
+            # Run SonarCloud analysis
             sonar-scanner \
               -Dsonar.projectKey=$(SONAR_PROJECT_KEY) \
               -Dsonar.organization=$(SONAR_ORG) \
               -Dsonar.projectName=$(SONAR_PROJECT_NAME) \
               -Dsonar.sources=. \
               -Dsonar.host.url=$(SONAR_HOST_URL) \
-              -Dsonar.login=$(SONAR_TOKEN)
-          displayName: "Run SonarQube Analysis"
+              -Dsonar.token=$SONAR_TOKEN \
+              -X
+          env:
+            SONAR_TOKEN: $(SONAR_TOKEN)
+          displayName: "Run SonarCloud Analysis"
 
 # ================= CD STAGE =================
 - stage: CD
